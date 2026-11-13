@@ -23,10 +23,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
+      
+            
       - name: Install marimo and dependencies
-        run: python -m pip install --upgrade marimo numpy pandas matplotlib scipy plotly pillow
-
+        run: python -m pip install --upgrade marimo uv numpy pandas matplotlib scipy plotly pillow
+      
       - name: Export interactive WASM application
         run: python -m marimo export html-wasm photo_app.py -o site --mode run --no-show-code
 
