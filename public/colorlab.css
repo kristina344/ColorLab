@@ -352,3 +352,44 @@ body:has(.cl) .js-plotly-plot,
 body:has(.cl) .plotly,
 body:has(.cl) .plot-container,
 body:has(.cl) .main-svg {background-color:white!important;}
+
+/* Scientific methods, readable math and on-demand Python source */
+.cl-method-formula {font-family:Georgia,'Times New Roman',serif;font-size:clamp(20px,2vw,27px);line-height:1.55;
+  background:#e2edc8;color:#254c3e;border-radius:11px;padding:15px 18px;margin:16px 0 10px;
+  letter-spacing:normal;overflow-x:auto}
+.cl-code-list {margin-top:4px;padding-top:6px}
+.cl-code-list-title {font-size:24px;color:#fff;margin:6px 0 16px}
+.cl-code-fold {background:#f0f8f9;color:#274a43;border-radius:14px;overflow:hidden;margin:12px 0;
+  letter-spacing:-.02em;box-shadow:0 1px 0 #ffffff7a}
+.cl-code-fold summary {display:flex;align-items:center;gap:14px;cursor:pointer;list-style:none;
+  font-size:20px;padding:16px 19px;outline-offset:-4px}
+.cl-code-fold summary::-webkit-details-marker {display:none}
+.cl-code-fold summary:hover {background:#e5f0eb}
+.cl-code-mark {font-family:Consolas,monospace;color:#367854;font-size:18px}
+.cl-code-arrow {margin-left:auto;font-size:28px;color:#367854;line-height:1}
+.cl-code-fold[open] .cl-code-arrow {transform:rotate(45deg)}
+.cl-code-note {margin:0;padding:9px 20px 12px;font-size:16px;color:#40675e;line-height:1.4}
+.cl-code-fold pre {margin:0;padding:19px 22px;background:#142e2f;color:#e9f9e7;
+  overflow:auto;max-height:490px;font:13px/1.55 Consolas,'Courier New',monospace;letter-spacing:normal;
+  white-space:pre;tab-size:4}
+.cl-code-fold pre code {font:inherit;color:inherit}
+@media(max-width:700px){.cl-code-fold summary {font-size:17px;padding:13px}
+ .cl-code-fold pre {font-size:11px;padding:12px}.cl-method-formula {font-size:19px}}
+
+/* COLOR LAB v3: лёгкая навигация и аккуратные анимации */
+.cl-contents{scroll-margin-top:28px}
+.cl-toc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cl-toc a{border-radius:16px;border:1px solid rgba(255,255,255,.78);padding:17px 18px;min-height:75px;text-decoration:none;color:#fff!important;display:flex;align-items:center;gap:13px;font-size:19px;line-height:1.15;letter-spacing:-.03em;transition:transform .22s ease,background .22s ease;}
+.cl-toc a span{font-size:15px;color:#edfabd;letter-spacing:0;font-weight:bold;}
+.cl-toc a:hover{background:rgba(255,255,255,.14);transform:translateY(-3px)}
+.cl-source-note,.cl-source-block{max-width:1180px;background:#e7f4f6;color:#294c43;padding:17px 20px;border-radius:14px;line-height:1.4;font-size:19px}
+.cl-source-note a,.cl-source-block a{color:#23694f;font-weight:bold}
+.cl-source-block{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:36px}
+.cl-source-block span{font-weight:bold;margin-right:auto}
+.cl-code-fold{transition:border-color .2s ease,background .2s ease}
+.cl-code-fold summary:focus-visible,.cl-toc a:focus-visible{outline:3px solid #e7f6a5;outline-offset:3px}
+@media(min-width:850px){.cl-hero-art .leftwing,.cl-hero-art .rightwing{animation:cl-float 7s ease-in-out infinite alternate}}
+@keyframes cl-float{from{translate:0 0}to{translate:0 -9px}}
+@media(max-width:920px){.cl-toc{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:630px){.cl-toc{grid-template-columns:1fr}.cl-toc a{min-height:auto;padding:13px 16px}}
+@media(prefers-reduced-motion:reduce){.cl-toc a,.cl-code-fold,.cl-hero-art img{animation:none!important;transition:none!important}}

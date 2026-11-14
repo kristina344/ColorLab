@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+
+<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><meta content="light" name="color-scheme"/><meta content="#5CA3D5" name="theme-color"/><meta content="COLOR LAB — статистическое исследование яркости и насыщенности 10 000 изображений CIFAR-10. Интерактивный marimo, графики, математические формулы и исходный код." name="description"/><title>COLOR LAB — яркость и насыщенность</title><link href="landing.css" rel="stylesheet"/></head><body>
+<div aria-hidden="true" class="noise"></div><div class="site"><header class="top" id="top"><a aria-label="COLOR LAB — наверх" class="brand" href="#top"><span class="logomark">✳</span><strong>COLOR LAB</strong></a><nav aria-label="Основные разделы"><a href="#contents">Содержание</a><a href="#findings">Данные</a><a href="#methods">Методика</a><a href="#conclusion">Вывод</a></nav><a class="navlaunch" href="interactive/">Запустить лабораторию <span>↗</span></a></header>
+<main><section class="hero"><div class="eyebrow">ПРИКЛАДНАЯ СТАТИСТИКА · ИНТЕРАКТИВНЫЙ ПРОЕКТ · 2026</div><h1>Цвет — это<br/><em>данные.</em></h1><div class="hero-grid"><div class="hero-pictures"><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-1.webp"/><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-2.webp"/><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-3.webp"/><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-4.webp"/><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-5.webp"/><img alt="Пример изображения CIFAR-10" loading="eager" src="report-assets/photo-6.webp"/><div class="picture-caption">CIFAR-10 / 32 × 32 px / HSV</div></div><div class="hero-copy"><p class="kicker">ЯРКОСТЬ × НАСЫЩЕННОСТЬ</p><h2>Что можно узнать о фотографии по её цвету?</h2><p>Я исследовала 10 000 изображений: измерила среднюю яркость и насыщенность, сравнила распределения, проверила зависимость и точность случайных выборок.</p><div class="hero-actions"><a class="button primary" href="interactive/">Открыть интерактивный marimo <span>↗</span></a><a class="button ghost" href="#contents">Смотреть исследование ↓</a></div></div></div><div class="hero-bottom"><span>10 000 РЕАЛЬНЫХ НАБЛЮДЕНИЙ</span><span>02 СЛУЧАЙНЫЕ ВЕЛИЧИНЫ</span><span>01 ИНТЕРАКТИВНАЯ ЛАБОРАТОРИЯ</span></div></section>
+<section class="section" id="contents"><div class="section-heading"><span>00 / НАВИГАЦИЯ</span><h2>Содержание</h2><p>Выбери раздел. Формулы объясняются рядом с результатами, а Python-код можно раскрыть, как в Jupyter Book.</p></div><div class="toc">
+<a href="#findings"><span>01</span><strong>Исходные данные и EDA</strong><small>среднее · гистограммы · выбросы</small><i>↗</i></a>
+<a href="#dependence"><span>02</span><strong>Корреляция и гипотеза</strong><small>Пирсон · Спирмен · перестановки</small><i>↗</i></a>
+<a href="#models"><span>03</span><strong>Распределения</strong><small>нормальное · бета · AIC · KS</small><i>↗</i></a>
+<a href="#sampling"><span>04</span><strong>Выборки и состоятельность</strong><small>с возвращением · без · RMSE</small><i>↗</i></a>
+<a href="#methods"><span>05</span><strong>Формулы и исходный код</strong><small>Z-стандартизация · алгоритмы</small><i>↗</i></a>
+<a href="#interactive"><span>06</span><strong>Эксперименты marimo</strong><small>обработка фото · выборки · генератор</small><i>↗</i></a>
+<a href="#conclusion"><span>07</span><strong>Общий вывод и источники</strong><small>ограничения исследования · ссылки</small><i>↗</i></a>
+</div></section>
+<section class="section" id="findings"><div class="section-heading"><span>01 / EDA</span><h2>Сначала изучим данные.</h2><p>Для каждой фотографии вычислены средние компоненты HSV: V (яркость) и S (насыщенность), обе от 0 до 1.</p></div><div class="metrics"><div class="metric"><span>ИЗОБРАЖЕНИЙ</span><strong>10 000</strong></div><div class="metric"><span>ЯРКОСТЬ, СРЕДНЕЕ</span><strong>0,5427</strong></div><div class="metric"><span>НАСЫЩЕННОСТЬ, СРЕДНЕЕ</span><strong>0,2725</strong></div><div class="metric"><span>КОРРЕЛЯЦИЯ ПИРСОНА</span><strong>−0,1889</strong></div><div class="metric"><span>ПЕРЕСТАНОВОЧНЫЙ ТЕСТ</span><strong>p ≈ 0,0005</strong></div><div class="metric"><span>НУЛЕВАЯ НАСЫЩЕННОСТЬ</span><strong>106 / 10 000</strong></div></div><div class="split"><div class="text-panel"><span class="mini-label">МЕТОД</span><h3>Почему это случайные величины?</h3><p>Значение яркости конкретной фотографии вычисляется по пикселям однозначно. Случайность возникает, когда мы <strong>случайным образом выбираем фотографию</strong> из 10 000 изображений CIFAR-10.</p><div aria-label="Средняя яркость и насыщенность изображения" class="formula formula-pair"><img alt="X=\frac{1}{1024}\sum_{i=1}^{1024}V_i" class="math-formula-img" loading="lazy" src="report-assets/formulas/average_brightness.svg"/><img alt="Y=\frac{1}{1024}\sum_{i=1}^{1024}S_i" class="math-formula-img" loading="lazy" src="report-assets/formulas/average_saturation.svg"/></div><p>Далее сравниваются распределения двух характеристик.</p></div><figure class="chart"><img alt="Гистограммы яркости и насыщенности из исследовательского Colab" loading="lazy" src="report-assets/distributions.webp"/><figcaption>Гистограммы яркости и насыщенности из исследовательского Colab</figcaption></figure></div><figure class="chart"><img alt="Диаграммы размаха: медиана, квартили и потенциальные выбросы" loading="lazy" src="report-assets/boxplot.webp"/><figcaption>Диаграммы размаха: медиана, квартили и потенциальные выбросы</figcaption></figure><details class="code-fold"><summary><span>⌘</span> Показать код: описательная статистика <b aria-hidden="true">＋</b></summary><pre><code>import pandas as pd
+
+df = pd.DataFrame({
+    "Яркость": brightness,
+    "Насыщенность": saturation
+})
+
+statistics = df.describe().T
+
+statistics["Дисперсия"] = df.var()
+
+print(statistics.round(4).to_string())</code></pre></details></section>
+<section class="section" id="dependence"><div class="section-heading"><span>02 / ГИПОТЕЗЫ</span><h2>Связаны ли яркость<br/>и насыщенность?</h2><p>Коэффициент Пирсона −0,1889, Спирмена −0,1904: слабая отрицательная связь.</p></div><div class="split"><figure class="chart"><img alt="Диаграмма плотности и корреляция между характеристиками" loading="lazy" src="report-assets/correlation.webp"/><figcaption>Диаграмма плотности и корреляция между характеристиками</figcaption></figure><div class="text-panel"><span class="mini-label">ПЕРЕСТАНОВОЧНЫЙ ТЕСТ · B = 2000</span><h3>Проверка независимости</h3><p><b>H₀</b>: яркость и насыщенность независимы. Перемешиваем насыщенность, сохраняя распределения по отдельности, и сравниваем модуль корреляции с наблюдаемым.</p><div aria-label="Оценка вероятности в перестановочном тесте" class="formula"><img alt="\hat{p}=\frac{k+1}{B+1}" class="math-formula-img" loading="lazy" src="report-assets/formulas/permutation_p.svg"/></div><p>Получено p ≈ 0,0005: при α = 0,05 нулевая гипотеза отвергается. Связь статистически значима, <strong>но остаётся слабой</strong>; это не утверждение о причинности.</p></div></div><details class="code-fold"><summary><span>⌘</span> Показать код: перестановочный тест <b aria-hidden="true">＋</b></summary><pre><code>rng = np.random.default_rng(42)
+
+n_permutations = 2000
+observed_r = np.corrcoef(brightness, saturation)[0, 1]
+
+permuted_r = np.empty(n_permutations)
+
+for i in range(n_permutations):
+    shuffled = rng.permutation(saturation)
+    permuted_r[i] = np.corrcoef(brightness, shuffled)[0, 1]
+
+p_value = (np.sum(np.abs(permuted_r) &gt;= abs(observed_r)) + 1) / (n_permutations + 1)
+
+print(f"Наблюдаемая корреляция: {observed_r:.4f}")
+print(f"Количество перестановок: {n_permutations}")
+print(f"p-value: {p_value:.6f}")
+
+if p_value &lt; 0.05:
+    print("Нулевая гипотеза отвергается.")
+else:
+    print("Недостаточно оснований отвергнуть нулевую гипотезу.")</code></pre></details></section>
+<section class="section" id="models"><div class="section-heading"><span>03 / МАТЕМАТИЧЕСКИЕ МОДЕЛИ</span><h2>Одна модель<br/>подходит не всем.</h2><p>Для яркости рассматриваем нормальное приближение, а для насыщенности используем бета-модель с отдельным учётом нулевых значений.</p></div><div class="model-cards"><div class="model-card"><span>ЯРКОСТЬ · V</span><h3>Нормальная модель</h3><div aria-label="Плотность нормального распределения" class="formula small"><img alt="f(x)=\frac{1}{\sigma\sqrt{2\pi}}\,\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)" class="math-formula-img" loading="lazy" src="report-assets/formulas/normal_pdf.svg"/></div><p>AIC нормальной модели: −12 747,89. Это приближённая модель, а не точный закон распределения.</p></div><div class="model-card"><span>НАСЫЩЕННОСТЬ · S</span><h3>Смешанная бета-модель</h3><div aria-label="Параметры модели насыщенности" class="formula formula-pair small"><img alt="P(S=0)=0{,}0106" class="math-formula-img" loading="lazy" src="report-assets/formulas/zero_mass.svg"/><img alt="\alpha=2{,}6313\qquad\beta=6{,}8900" class="math-formula-img" loading="lazy" src="report-assets/formulas/beta_params.svg"/></div><p>Для 9 894 положительных значений использована бета-модель. Нулевые значения учитываются отдельно.</p></div></div><figure class="chart"><img alt="Сравнение нормальной, бета- и равномерной моделей с данными" loading="lazy" src="report-assets/model-histograms.webp"/><figcaption>Сравнение нормальной, бета- и равномерной моделей с данными</figcaption></figure><div class="split"><figure class="chart"><img alt="Подобранная бета-плотность для положительной насыщенности" loading="lazy" src="report-assets/beta-model.webp"/><figcaption>Подобранная бета-плотность для положительной насыщенности</figcaption></figure><figure class="chart"><img alt="Q–Q графики и проверка согласия для распределений" loading="lazy" src="report-assets/qq-plots.webp"/><figcaption>Q–Q графики и проверка согласия для распределений</figcaption></figure></div><p class="section-note">Статистика KS: яркость 0,02295; положительная насыщенность 0,01953. Параметры получены по тем же данным, поэтому стандартное p-value без поправки не используется как готовое доказательство точного согласия.</p><details class="code-fold"><summary><span>⌘</span> Показать код: сравнение распределений и AIC <b aria-hidden="true">＋</b></summary><pre><code>from scipy import stats
+
+results = []
+
+for name, values in [
+    ("Яркость", brightness),
+    ("Насыщенность (&gt;0)", saturation[saturation &gt; 0])
+]:
+    mu, sigma = stats.norm.fit(values)
+    normal_aic = 4 - 2 * np.sum(stats.norm.logpdf(values, mu, sigma))
+
+    a, b, _, _ = stats.beta.fit(values, floc=0, fscale=1)
+    beta_aic = 4 - 2 * np.sum(stats.beta.logpdf(values, a, b))
+
+    uniform_aic = -2 * np.sum(stats.uniform.logpdf(values, 0, 1))
+
+    results.append([name, "Нормальное", normal_aic])
+    results.append([name, "Бета", beta_aic])
+    results.append([name, "Равномерное U(0,1)", uniform_aic])
+
+aic_table = pd.DataFrame(
+    results,
+    columns=["Величина", "Распределение", "AIC"]
+)
+
+print(aic_table.round(2).to_string(index=False))
+print()
+print("Нулевых значений насыщенности:", np.sum(saturation == 0))
+print("Доля нулевых значений:", np.mean(saturation == 0))</code></pre></details></section>
+<section class="section" id="sampling"><div class="section-heading"><span>04 / ВЫБОРКИ</span><h2>Сколько фотографий<br/>достаточно?</h2><p>Выборки с возвращением и без возвращения сравниваются с конечной совокупностью из 10 000 изображений.</p></div><div class="split"><div class="text-panel"><span class="mini-label">ЭКСПЕРИМЕНТ · 300 ПОВТОРЕНИЙ</span><h3>Проверка состоятельности</h3><p>Для размеров выборки от 50 до 5000 оцениваются среднее и дисперсия. Показатель RMSE характеризует среднюю величину ошибки оценки.</p><div aria-label="Среднеквадратичная ошибка оценки" class="formula"><img alt="\mathrm{RMSE}=\sqrt{\frac{1}{R}\sum_{j=1}^{R}(\hat{\theta}_j-\theta)^2}" class="math-formula-img" loading="lazy" src="report-assets/formulas/rmse.svg"/></div><p>По результатам эксперимента, ошибки в целом уменьшаются при росте n. Отбор без возвращения часто даёт меньшую ошибку благодаря конечности набора.</p></div><figure class="chart"><img alt="Ошибка оценок среднего и дисперсии при изменении объёма выборки" loading="lazy" src="report-assets/rmse.webp"/><figcaption>Ошибка оценок среднего и дисперсии при изменении объёма выборки</figcaption></figure></div><details class="code-fold"><summary><span>⌘</span> Показать код: сравнение выборок <b aria-hidden="true">＋</b></summary><pre><code>rng = np.random.default_rng(42)
+
+sample_sizes = [100, 500, 1000]
+results = []
+
+for size in sample_sizes:
+    for replace, method in [
+        (True, "С возвращением"),
+        (False, "Без возвращения")
+    ]:
+        indices = rng.choice(len(population), size=size, replace=replace)
+        sample = population[indices]
+
+        means = sample.mean(axis=0)
+        variances = sample.var(axis=0, ddof=1)
+
+        results.append([
+            size,
+            method,
+            means[0],
+            means[1],
+            variances[0],
+            variances[1]
+        ])
+
+sample_table = pd.DataFrame(
+    results,
+    columns=[
+        "Размер",
+        "Способ",
+        "Средняя яркость",
+        "Средняя насыщенность",
+        "Дисперсия яркости",
+        "Дисперсия насыщенности"
+    ]
+)
+
+print(sample_table.round(4).to_string(index=False))</code></pre></details><details class="code-fold"><summary><span>⌘</span> Показать код: 300 повторений и RMSE <b aria-hidden="true">＋</b></summary><pre><code>rng = np.random.default_rng(42)
+
+sizes = [50, 100, 250, 500, 1000, 2000, 5000]
+repeats = 300
+results = []
+
+for size in sizes:
+    for replace, method in [(True, "С возвращением"), (False, "Без возвращения")]:
+        mean_estimates = []
+        var_estimates = []
+
+        for _ in range(repeats):
+            indices = rng.choice(len(population), size=size, replace=replace)
+            sample = population[indices]
+
+            mean_estimates.append(sample.mean(axis=0))
+            var_estimates.append(sample.var(axis=0, ddof=1))
+
+        mean_estimates = np.array(mean_estimates)
+        var_estimates = np.array(var_estimates)
+
+        mean_rmse = np.sqrt(np.mean((mean_estimates - population_mean) ** 2, axis=0))
+        var_rmse = np.sqrt(np.mean((var_estimates - population_var) ** 2, axis=0))
+
+        results.append([
+            size, method,
+            mean_rmse[0], mean_rmse[1],
+            var_rmse[0], var_rmse[1]
+        ])
+
+rmse_table = pd.DataFrame(
+    results,
+    columns=[
+        "Размер", "Способ",
+        "RMSE среднего яркости",
+        "RMSE среднего насыщенности",
+        "RMSE дисперсии яркости",
+        "RMSE дисперсии насыщенности"
+    ]
+)
+
+print(rmse_table.round(5).to_string(index=False))</code></pre></details></section>
+<section class="section" id="methods"><div class="section-heading"><span>05 / МЕТОДИКА</span><h2>Как получены<br/>результаты?</h2><p>Все формулы и вычисления можно проверить. Полный код и результаты есть в Google Colab.</p></div><div class="text-panel"><span class="mini-label">Z-СТАНДАРТИЗАЦИЯ</span><h3>Сравнение отклонений от среднего</h3><div aria-label="Z стандартизация" class="formula"><img alt="z_i=\frac{x_i-\bar{x}}{s}" class="math-formula-img" loading="lazy" src="report-assets/formulas/standardize.svg"/></div><p>Среднее стандартизованных величин близко к нулю, а выборочное стандартное отклонение равно единице. При этом стандартизация не делает распределение нормальным.</p><details class="code-fold"><summary><span>⌘</span> Показать код: Z-стандартизация <b aria-hidden="true">＋</b></summary><pre><code>brightness_z = (brightness - brightness.mean()) / brightness.std(ddof=1)
+saturation_z = (saturation - saturation.mean()) / saturation.std(ddof=1)
+
+comparison = pd.DataFrame({
+    "Показатель": ["Яркость", "Насыщенность"],
+    "Среднее до": [brightness.mean(), saturation.mean()],
+    "Среднее после": [brightness_z.mean(), saturation_z.mean()],
+    "Ст. откл. до": [brightness.std(ddof=1), saturation.std(ddof=1)],
+    "Ст. откл. после": [brightness_z.std(ddof=1), saturation_z.std(ddof=1)]
+})
+
+print(comparison.round(4).to_string(index=False))</code></pre></details></div><a class="reference" href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" rel="noopener noreferrer" target="_blank"><span>КОД И РАСЧЁТЫ</span><strong>Открыть Google Colab</strong><i>↗</i></a></section>
+<section class="section interactive-cta" id="interactive"><div class="section-heading"><span>06 / MARIMO</span><h2>Попробуй<br/>на практике.</h2><p>Проверь, как меняются фотографии и статистические показатели, когда ты выбираешь другие параметры.</p></div><div class="interaction-grid"><div><span>01</span><h3>Измени фотографию</h3><p>Сдвигай яркость и насыщенность, сравнивай исходное изображение с результатом.</p></div><div><span>02</span><h3>Создай выборку</h3><p>Меняй размер и способ отбора, смотри гистограммы и статистики.</p></div><div><span>03</span><h3>Исследуй зависимость</h3><p>Увеличивай диаграмму, изучай отдельные точки и коэффициент корреляции.</p></div><div><span>04</span><h3>Запусти генератор</h3><p>Сравни эмпирический и теоретический методы и три источника псевдослучайных чисел.</p></div></div><a class="button primary big" href="interactive/">Запустить интерактивную лабораторию marimo <span>↗</span></a></section>
+<section class="section" id="conclusion"><div class="section-heading"><span>07 / ВЫВОД</span><h2>Что показало<br/>исследование.</h2><p>Полный общий вывод из Google Colab, без сокращений и декоративных выделений.</p></div><article class="conclusion-body"><p>В этой работе я исследовала две характеристики цифровых изображений: среднюю яркость и среднюю насыщенность. Для анализа использовала 10 000 изображений из датасета CIFAR-10. Обе величины рассчитывались по цветовой модели HSV.</p>
+<p>Сначала я провела разведочный анализ данных. Средняя яркость изображений составила 0,5427, а средняя насыщенность 0,2725. По гистограммам было видно, что яркость имеет почти симметричное распределение, а насыщенность чаще принимает небольшие значения.</p>
+<p>Затем я проверила, существует ли связь между этими характеристиками. Коэффициент корреляции Пирсона составил −0,1889, а Спирмена −0,1904. Оба значения указывают на слабую отрицательную связь. Перестановочный тест дал p-value около 0,0005, поэтому на уровне значимости 0,05 я опровергла гипотезу о независимости величин. Получается, что в исследуемом наборе более яркие изображения имеют небольшую тенденцию быть менее насыщенными, хотя сама связь выражена слабо.</p>
+<p>Для описания распределений я рассмотрела несколько математических моделей. Яркость удалось достаточно хорошо приблизить нормальным распределением. Для насыщенности я использовала смешанную модель, поскольку у 106 изображений насыщенность оказалась равна нулю. Для остальных 9 894 изображений было подобрано бета-распределение с параметрами $a = 2.6313$ и $b = 6.8900$.</p>
+<p>Проверка с помощью Q–Q графиков и статистики Колмогорова и Смирнова показала, что выбранные модели близко описывают наблюдаемые распределения, хотя полностью с ними не совпадают.</p>
+<p>Также я сравнила случайные выборки разного размера. При многократном отборе получилось, что с увеличением количества изображений ошибки оценивания среднего и дисперсии уменьшаются. Это согласуется с теоретическим свойством состоятельности оценок. При больших выборках отбор без возвращения обычно показывал меньшую ошибку.</p>
+<p>С точки зрения дизайна исследование показало, что яркость и насыщенность стоит рассматривать как две разные характеристики изображения. Между ними есть статистическая связь, но она недостаточно сильная, чтобы по одной характеристике точно определять другую.</p>
+<p>При этом результаты относятся к изображениям CIFAR-10, а не ко всем существующим фотографиям. Кроме того, из-за небольшого разрешения изображений исследование не позволяет оценивать качество профессиональной фотографии или её нишевость и эстетику.</p>
+</article><div class="sources"><h3>Исходные материалы</h3><a href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" rel="noopener noreferrer" target="_blank">Исследовательский Google Colab ↗</a><a href="https://github.com/kristina344/ColorLab" rel="noopener noreferrer" target="_blank">GitHub проекта ↗</a><a href="colorlab_report.html">Резервная статическая версия отчёта ↗</a></div></section>
+</main><footer><strong>COLOR LAB</strong><span>CIFAR-10 / HSV / STATISTICS / MARIMO</span><a href="#top">Наверх ↑</a></footer></div></body></html>

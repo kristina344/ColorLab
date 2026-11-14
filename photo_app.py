@@ -27,28 +27,48 @@ async def _():
     from PIL import Image
 
     import sys
+    import asyncio
+    from html import escape as html_escape
 
     if sys.platform == "emscripten":
         from pyodide.http import pyfetch
 
         base_url = str(mo.notebook_location()).rstrip("/") + "/public"
         root = Path("/tmp/colorlab_runtime")
-        for relative_name in (
+        resources = (
             "data/photo_color_data.csv",
             "data/cifar10_photos.zip",
             "assets/texture.jpg",
             "assets/wing.svg",
             "assets/flower.svg",
             "assets/divider.svg",
-        ):
+        )
+
+        async def download_resource(relative_name):
             destination = root / relative_name
             destination.parent.mkdir(parents=True, exist_ok=True)
-            response = await pyfetch(f"{base_url}/{relative_name}")
-            if not response.ok:
-                raise FileNotFoundError(
-                    f"Не удалось загрузить {relative_name}: HTTP {response.status}"
-                )
-            destination.write_bytes(await response.bytes())
+            last_error = None
+            for attempt in range(3):
+                try:
+                    response = await pyfetch(f"{base_url}/{relative_name}")
+                    if not response.ok:
+                        raise OSError(f"HTTP {response.status}")
+                    destination.write_bytes(await response.bytes())
+                    return
+                except Exception as exc:
+                    last_error = exc
+                    if attempt < 2:
+                        await asyncio.sleep(0.7 * (attempt + 1))
+            raise RuntimeError(
+                f"Не удалось загрузить {relative_name} после 3 попыток: {last_error}. "
+                "Попробуйте лёгкую версию отчёта /ColorLab/colorlab_report.html"
+            )
+
+        # Набор данных обязателен, декоративные ресурсы — нет.
+        required = resources[:2]
+        optional = resources[2:]
+        await asyncio.gather(*(download_resource(name) for name in required))
+        await asyncio.gather(*(download_resource(name) for name in optional), return_exceptions=True)
     else:
         root = mo.notebook_location() / "public"
 
@@ -57,11 +77,12 @@ async def _():
     asset_dir = root / "assets"
     if not csv_path.is_file() or not photos_path.is_file():
         raise FileNotFoundError("Нет данных: проверьте файлы в папке data")
-    table = pd.read_csv(csv_path).sort_values("image_id").reset_index(drop=True)
-    if len(table) != 10000 or table[["image_id", "brightness", "saturation"]].isna().any().any():
-        raise ValueError("CSV: ожидаются 10 000 строк без пропусков")
+    table = pd.read_csv(csv_path)
     if not {"image_id", "brightness", "saturation"}.issubset(table.columns):
         raise ValueError("CSV должен содержать image_id, brightness, saturation")
+    table = table.sort_values("image_id").reset_index(drop=True)
+    if len(table) != 10000 or table[["image_id", "brightness", "saturation"]].isna().any().any():
+        raise ValueError("CSV: ожидаются 10 000 строк без пропусков")
     with zipfile.ZipFile(photos_path) as _archive:
         ids = sorted(int(Path(_name).stem) for _name in _archive.namelist()
                      if _name.startswith("photos/") and _name.endswith(".png"))
@@ -69,7 +90,8 @@ async def _():
         raise ValueError("В ZIP не найдены изображения")
 
     def asset_base64(name):
-        return base64.b64encode((asset_dir / name).read_bytes()).decode("ascii")
+        path = asset_dir / name
+        return base64.b64encode(path.read_bytes()).decode("ascii") if path.exists() else ""
 
     def image_png(array):
         _buf = io.BytesIO()
@@ -86,13 +108,23 @@ async def _():
     def num(v, decimals=4):
         return f"{v:.{decimals}f}".replace(".", ",")
 
+    def code_panel(title, source, commentary=""):
+        explanation = f'<p class="cl-code-note">{html_escape(commentary)}</p>' if commentary else ""
+        return (
+            '<details class="cl-code-fold"><summary><span class="cl-code-mark">&lt;/&gt;</span>'
+            '<span>Показать Python-код: ' + html_escape(title) + '</span>'
+            '<span class="cl-code-arrow" aria-hidden="true">+</span></summary>'
+            + explanation
+            + '<pre><code>' + html_escape(source.rstrip()) + '</code></pre></details>'
+        )
+
     texture = asset_base64("texture.jpg")
     wing = asset_base64("wing.svg")
     flower = asset_base64("flower.svg")
     divider = asset_base64("divider.svg")
     return (mo, np, plt, stats, go, Image, zipfile, io, rgb_to_hsv, hsv_to_rgb,
             table, photos_path, ids, image_png, plot_png, num,
-            texture, wing, flower, divider)
+            texture, wing, flower, divider, code_panel)
 
 
 @app.cell
@@ -101,8 +133,8 @@ def _(mo, texture, wing, flower, divider):
     <header class="cl cl-hero" id="top">
       <nav class="cl-nav"><div class="cl-logo"><img src="data:image/svg+xml;base64,{wing}"><img src="data:image/svg+xml;base64,{wing}"></div>
        <div class="cl-navlinks"><a href="#top">Проект</a><a href="#data">Данные</a>
-       <a href="#results">Результаты</a><a href="#interactive">Интерактив</a><a href="#conclusion">Вывод</a></div>
-       <a class="gh" href="https://github.com/ekairaliev/AppStat-Lab01" target="_blank">GitHub ↗</a></nav>
+       <a href="#results">Результаты</a><a href="#methods">Формулы</a><a href="#interactive">Эксперименты</a><a href="#conclusion">Вывод</a></div>
+       <a class="gh" href="../" title="К быстрому отчёту">Обзор ↗</a></nav>
       <h1>Яркость и насыщенность цифровых изображений</h1>
       <div class="cl-hero-grid">
        <div class="cl-hero-art"><img class="texture" src="data:image/jpeg;base64,{texture}">
@@ -120,6 +152,30 @@ def _(mo, texture, wing, flower, divider):
         <img class="flower" src="data:image/svg+xml;base64,{flower}" alt=""></div>
     </header>
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.Html("""
+    <section class="cl cl-section cl-contents" id="contents">
+      <div class="cl-head"><h2>Навигация по исследованию</h2></div>
+      <p class="cl-sub">В отчёте сначала показано, что и почему мы рассчитываем, затем — результаты. Python-код и подробные выводы раскрываются по нажатию.</p>
+      <div class="cl-toc">
+       <a href="#data"><span>01</span> Данные и случайные величины</a>
+       <a href="#results"><span>02</span> Описательная статистика</a>
+       <a href="#eda"><span>03</span> Гистограммы и EDA</a>
+       <a href="#distributions"><span>04</span> Математические распределения</a>
+       <a href="#dependence"><span>05</span> Зависимость и гипотеза</a>
+       <a href="#standardization"><span>06</span> Z-стандартизация</a>
+       <a href="#consistency"><span>07</span> Выборки и состоятельность</a>
+       <a href="#methods"><span>08</span> Методика и раскрывающийся код</a>
+       <a href="#interactive"><span>09</span> Эксперименты с фото</a>
+       <a href="#experiment-relation"><span>10</span> Диаграмма зависимости</a>
+       <a href="#generator"><span>11</span> Генератор случайных величин</a>
+       <a href="#conclusion"><span>12</span> Итог исследования</a>
+      </div>
+    </section>""")
     return
 
 
@@ -175,6 +231,34 @@ def _(mo, table, num):
 @app.cell
 def _(mo):
     mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Описательная статистика</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Я рассчитала основные статистические характеристики для 10 000 изображений CIFAR-10.</p>\n<ol>\n<li><p>Средняя яркость составила <mark class="cl-key cl-key-yellow">0,5427</mark>, а средняя насыщенность <mark class="cl-key cl-key-green">0,2725</mark>. Получается, что изображения в среднем имеют умеренную яркость, но насыщенность цветов заметно ниже.</p>\n</li>\n<li><p>Стандартное отклонение насыщенности 0,1403 немного больше, чем у яркости 0,1279. Это говорит о том, что насыщенность сильнее изменяется относительно своего среднего значения в абсолютных единицах шкалы HSV.</p>\n</li>\n<li><p>Также я заметила, что у обеих величин среднее немного больше медианы. Особенно это заметно у насыщенности, поэтому можно предположить, что её распределение имеет правостороннюю асимметрию но еще не факт, поэтому следующим шагом построю гистограммы распределений.</p>\n</li>\n</ol>\n</div></details></section>')
+    return
+
+
+@app.cell
+def _(mo, code_panel):
+    mo.Html("""
+    <section class="cl cl-section" id="methods">
+      <div class="cl-head"><h2>Методика, формулы и код</h2></div>
+      <p class="cl-source-note">Полные вычисления, таблицы и расчётные ячейки — <a href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">в исходном Colab ↗</a>. Ниже показаны ключевые фрагменты кода; они скрыты по умолчанию.</p>
+      <p class="cl-sub">Как устроено исследование: сначала определяем случайные величины, затем проверяем статистические свойства и сопоставляем модели с данными. Код можно раскрыть отдельно, он не заслоняет результаты. В основе разделов — вычисления из актуального Google Colab.</p>
+      <div class="cl-grid2">
+        <div class="cl-box"><span class="cl-tag">01 / Случайные величины</span><p>Для каждой фотографии вычисляю среднее значение компонент V и S по 1024 пикселям в цветовом пространстве HSV. Случайность возникает при выборе фотографии из набора.</p><div class="cl-method-formula">X = (1 / 1024) · Σ Vᵢ<br>Y = (1 / 1024) · Σ Sᵢ</div><p class="cl-fine">Формула детерминированно вычисляет значение для выбранной фотографии. Случайная величина — результат при случайном выборе фотографии.</p></div>
+        <div class="cl-box"><span class="cl-tag">02 / Статистики</span><p>Среднее, дисперсия, медиана и квартили характеризуют положение и разброс наблюдений. Для выборочной дисперсии используется деление на n − 1.</p><div class="cl-method-formula">x̄ = Σxᵢ / n<br>s² = Σ(xᵢ − x̄)² / (n − 1)</div><p class="cl-fine">Отдельно рассчитываю парную корреляцию Пирсона и Спирмена.</p></div>
+        <div class="cl-box"><span class="cl-tag">03 / Проверка гипотезы</span><p>H₀: яркость и насыщенность независимы. Для проверки 2000 раз переставляю значения насыщенности и пересчитываю корреляцию. Сравниваю наблюдаемый модуль r с перестановочными.</p><div class="cl-method-formula">p = (k + 1) / (B + 1), B = 2000</div><p class="cl-fine">k — число перестановок, где |r*| ≥ |r наблюд.|. Малое p даёт основания отвергнуть H₀, но само по себе не описывает силу связи.</p></div>
+        <div class="cl-box"><span class="cl-tag">04 / Модели и оценки</span><p>Яркость приближаю нормальным законом; положительную насыщенность — бета-распределением с отдельной вероятностью нуля. Точность оценок проверяю на повторных выборках.</p><div class="cl-method-formula">RMSE = √(Σ(θ̂ⱼ − θ)² / R)</div><p class="cl-fine">В эксперименте R = 300 повторений для каждого объёма и способа отбора.</p></div>
+      </div>
+    </section>""")
+    return
+
+@app.cell
+def _(mo, code_panel):
+    mo.Html('<section class="cl cl-section cl-code-list"><div class="cl-code-list-title">Открыть вычисления из исходного Colab</div>'
+        + code_panel('описательная статистика', 'import pandas as pd\n\ndf = pd.DataFrame({\n    "Яркость": brightness,\n    "Насыщенность": saturation\n})\n\nstatistics = df.describe().T\n\nstatistics["Дисперсия"] = df.var()\n\nprint(statistics.round(4).to_string())', 'На исходном наборе яркостей и насыщенностей рассчитываются выборочные характеристики.')
+        + code_panel('перестановочный тест', 'rng = np.random.default_rng(42)\n\nn_permutations = 2000\nobserved_r = np.corrcoef(brightness, saturation)[0, 1]\n\npermuted_r = np.empty(n_permutations)\n\nfor i in range(n_permutations):\n    shuffled = rng.permutation(saturation)\n    permuted_r[i] = np.corrcoef(brightness, shuffled)[0, 1]\n\np_value = (np.sum(np.abs(permuted_r) >= abs(observed_r)) + 1) / (n_permutations + 1)\n\nprint(f"Наблюдаемая корреляция: {observed_r:.4f}")\nprint(f"Количество перестановок: {n_permutations}")\nprint(f"p-value: {p_value:.6f}")\n\nif p_value < 0.05:\n    print("Нулевая гипотеза отвергается.")\nelse:\n    print("Недостаточно оснований отвергнуть нулевую гипотезу.")', 'Использован фактический код теста из исследовательского ноутбука: 2000 перестановок и двусторонняя статистика.')
+        + code_panel('стандартизация', 'brightness_z = (brightness - brightness.mean()) / brightness.std(ddof=1)\nsaturation_z = (saturation - saturation.mean()) / saturation.std(ddof=1)\n\ncomparison = pd.DataFrame({\n    "Показатель": ["Яркость", "Насыщенность"],\n    "Среднее до": [brightness.mean(), saturation.mean()],\n    "Среднее после": [brightness_z.mean(), saturation_z.mean()],\n    "Ст. откл. до": [brightness.std(ddof=1), saturation.std(ddof=1)],\n    "Ст. откл. после": [brightness_z.std(ddof=1), saturation_z.std(ddof=1)]\n})\n\nprint(comparison.round(4).to_string(index=False))', 'Z-преобразование меняет масштаб, но не превращает данные в нормальное распределение.')
+        + code_panel('состоятельность: повторные выборки', 'rng = np.random.default_rng(42)\n\nsizes = [50, 100, 250, 500, 1000, 2000, 5000]\nrepeats = 300\nresults = []\n\nfor size in sizes:\n    for replace, method in [(True, "С возвращением"), (False, "Без возвращения")]:\n        mean_estimates = []\n        var_estimates = []\n\n        for _ in range(repeats):\n            indices = rng.choice(len(population), size=size, replace=replace)\n            sample = population[indices]\n\n            mean_estimates.append(sample.mean(axis=0))\n            var_estimates.append(sample.var(axis=0, ddof=1))\n\n        mean_estimates = np.array(mean_estimates)\n        var_estimates = np.array(var_estimates)\n\n        mean_rmse = np.sqrt(np.mean((mean_estimates - population_mean) ** 2, axis=0))\n        var_rmse = np.sqrt(np.mean((var_estimates - population_var) ** 2, axis=0))\n\n        results.append([\n            size, method,\n            mean_rmse[0], mean_rmse[1],\n            var_rmse[0], var_rmse[1]\n        ])\n\nrmse_table = pd.DataFrame(\n    results,\n    columns=[\n        "Размер", "Способ",\n        "RMSE среднего яркости",\n        "RMSE среднего насыщенности",\n        "RMSE дисперсии яркости",\n        "RMSE дисперсии насыщенности"\n    ]\n)\n\nprint(rmse_table.round(5).to_string(index=False))', 'Это часть цикла из исходного ноутбука, где сравниваются оценки по выборкам с возвращением и без него.')
+        + code_panel('парный эмпирический генератор', 'rng = np.random.default_rng(42)\nindices = rng.integers(0, len(table), size=n)\ngenerated_pairs = table.loc[indices, ["brightness", "saturation"]].to_numpy()\n# Выбираем реальные пары (яркость, насыщенность) вместе,\n# чтобы сохранить наблюдаемую зависимость.', 'Упрощённая иллюстрация логики генератора; рабочая реализация на сайте допускает выбор базового датчика.')
+        + '</section>')
     return
 
 @app.cell
@@ -704,10 +788,11 @@ def _(mo, flower):
 </div>
        </div>
 
+       <div class="cl-source-block"><span>Методические материалы</span><a href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">Открыть исходный Google Colab ↗</a><a href="../colorlab_report.html" target="_blank" rel="noopener noreferrer">Резервный отчёт без Python ↗</a></div>
        <div class="cl-footer">
          <div><strong>COLOR LAB</strong><br>Исследование CIFAR-10, 2026</div>
-         <div class="cl-footer-links"><div>Исходный анализ: <a target="_blank" rel="noopener noreferrer" href="https://colab.research.google.com/drive/17_NhhSs_E5tIDFuaY3CTjjgJWv2oJ3hE?usp=sharing">Открыть Colab</a></div><div class="cl-note-link"></div></div>
-         <div class="cl-footer-sources">Источники: CIFAR-10, В. Е. Гмурман, Leemis и McQueston (2008), SciPy, NumPy, Matplotlib</div>
+         <div class="cl-footer-links"><div>Исходный анализ: <a target="_blank" rel="noopener noreferrer" href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing">Открыть Colab</a></div><div class="cl-note-link"></div></div>
+         <div class="cl-footer-sources"><a href="../colorlab_report.html" target="_blank" rel="noopener noreferrer">Лёгкая версия отчёта (без Python)</a> · Источники: CIFAR-10, В. Е. Гмурман, Leemis и McQueston (2008), SciPy, NumPy, Matplotlib</div>
        </div>
     </section>""")
     return
