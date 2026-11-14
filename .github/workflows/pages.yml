@@ -30,6 +30,12 @@ jobs:
 
       - name: Build interactive marimo
         run: python -m marimo export html-wasm photo_app.py -o site/interactive --mode run --no-show-code
+        
+      - name: Check exported website
+        run: |
+          ls -la site
+          find site -maxdepth 2 -type f | head -40
+          test -f site/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
