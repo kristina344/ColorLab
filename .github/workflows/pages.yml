@@ -31,12 +31,6 @@ jobs:
       - name: Build interactive marimo
         run: python -m marimo export html-wasm photo_app.py -o site/interactive --mode run --no-show-code
 
-      - name: Add main site
-        run: |
-          cp index.html landing.css colorlab_report.html site/
-          cp -r report-assets site/report-assets
-          touch site/.nojekyll
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
