@@ -20,19 +20,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      
-            
-      - name: Install marimo and dependencies
-        run: python -m pip install --upgrade marimo uv numpy pandas matplotlib scipy plotly pillow
-      
-      - name: Export interactive WASM application
-        run: python -m marimo export html-wasm photo_app.py -o site --mode run --no-show-code
 
-      - name: Keep GitHub Pages assets unchanged
-        run: touch site/.nojekyll
+      - name: Install dependencies
+        run: python -m pip install --upgrade marimo uv numpy pandas matplotlib scipy plotly pillow
+
+      - name: Build interactive marimo
+        run: python -m marimo export html-wasm photo_app.py -o site/interactive --mode run --no-show-code
+
+      - name: Add main site
+        run: |
+          cp index.html landing.css colorlab_report.html site/
+          cp -r report-assets site/report-assets
+          touch site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
         with:
