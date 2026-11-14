@@ -393,3 +393,24 @@ body:has(.cl) .main-svg {background-color:white!important;}
 @media(max-width:920px){.cl-toc{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:630px){.cl-toc{grid-template-columns:1fr}.cl-toc a{min-height:auto;padding:13px 16px}}
 @media(prefers-reduced-motion:reduce){.cl-toc a,.cl-code-fold,.cl-hero-art img{animation:none!important;transition:none!important}}
+
+/* Единая компактная страница COLOR LAB */
+.cl-hero-compact .cl-nav {margin-bottom:25px}
+.cl-eyebrow {font-size:14px;letter-spacing:.12em;color:#eaf2ba;margin:0 0 10px;font-weight:700}
+.cl-hero-compact h1 {font-size:clamp(42px,5.4vw,76px);line-height:1.04;margin-bottom:24px}
+.cl-intro-split {display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,3vw,44px);align-items:stretch}
+.cl-intro-art {position:relative;min-height:245px;overflow:hidden}
+.cl-intro-art>.texture {position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cl-intro-art>.leftwing,.cl-intro-art>.rightwing{position:absolute;top:12%;height:75%;width:28%;object-fit:contain;filter:brightness(0) invert(1)}
+.cl-intro-art>.leftwing{left:9%;transform:rotate(-55deg)}
+.cl-intro-art>.rightwing{right:9%;transform:scaleX(-1) rotate(-55deg)}
+.cl-intro-text {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:13px;font-size:clamp(20px,2vw,27px);line-height:1.22}
+.cl-intro-text p{margin:0}
+.cl-intro-hint{font-size:17px;line-height:1.35;color:#eaf7ff;margin-top:7px!important;max-width:500px}
+.cl-launch{display:inline-flex;align-items:center;gap:20px;justify-content:space-between;border-radius:50px;background:#eaf2ba;color:#254e40!important;text-decoration:none!important;font-weight:700;padding:14px 24px;font-size:clamp(17px,1.7vw,22px);transition:transform .2s ease,background .2s ease}
+.cl-launch:hover{transform:translateY(-3px);background:#f4facf}
+.cl-section-start{padding-top:54px}
+.cl-lab-divider{padding-top:39px}
+.cl-single-footer{padding-bottom:30px}
+@media(max-width:760px){.cl-intro-split{grid-template-columns:1fr}.cl-intro-art{min-height:210px}.cl-navlinks{justify-content:flex-start}.cl-hero-compact h1{font-size:clamp(36px,8vw,58px)}}
+@media(prefers-reduced-motion:reduce){.cl-launch{transition:none!important}.cl-launch:hover{transform:none}}

@@ -1,14 +1,11 @@
 # /// script
-# dependencies = [
-#   "numpy", "pandas", "matplotlib", "scipy", "plotly", "pillow"
-# ]
+# dependencies = ["numpy", "pandas", "matplotlib", "scipy", "plotly", "pillow"]
 # ///
 
 import marimo
 
 __generated_with = "0.18.0"
 app = marimo.App(width="full", css_file="colorlab.css")
-
 
 @app.cell
 async def _():
@@ -61,7 +58,7 @@ async def _():
                         await asyncio.sleep(0.7 * (attempt + 1))
             raise RuntimeError(
                 f"Не удалось загрузить {relative_name} после 3 попыток: {last_error}. "
-                "Попробуйте лёгкую версию отчёта /ColorLab/colorlab_report.html"
+                "Проверьте подключение к сети и обновите страницу."
             )
 
         # Набор данных обязателен, декоративные ресурсы — нет.
@@ -126,284 +123,38 @@ async def _():
             table, photos_path, ids, image_png, plot_png, num,
             texture, wing, flower, divider, code_panel)
 
-
 @app.cell
-def _(mo, texture, wing, flower, divider):
+def _(mo, texture, wing):
     mo.Html(f"""
-    <header class="cl cl-hero" id="top">
-      <nav class="cl-nav"><div class="cl-logo"><img src="data:image/svg+xml;base64,{wing}"><img src="data:image/svg+xml;base64,{wing}"></div>
-       <div class="cl-navlinks"><a href="#top">Проект</a><a href="#data">Данные</a>
-       <a href="#results">Результаты</a><a href="#methods">Формулы</a><a href="#interactive">Эксперименты</a><a href="#conclusion">Вывод</a></div>
-       <a class="gh" href="../" title="К быстрому отчёту">Обзор ↗</a></nav>
-      <h1>Яркость и насыщенность цифровых изображений</h1>
-      <div class="cl-hero-grid">
-       <div class="cl-hero-art"><img class="texture" src="data:image/jpeg;base64,{texture}">
-         <img class="leftwing" src="data:image/svg+xml;base64,{wing}">
-         <img class="rightwing" src="data:image/svg+xml;base64,{wing}"></div>
-       <div class="cl-hero-copy"><div class="cl-ribbon">Интерактивное статистическое исследование на основе CIFAR-10</div>
-         <p>Как связаны яркость и насыщенность фотографий?</p>
-         <p>Можно ли описать их с помощью математических распределений?</p>
-         <p>Насколько точно небольшая выборка отражает весь набор?</p>
-         <p>Я взяла 10 000 изображений, посчитала их цветовые характеристики, сравнила распределения и проверила, связаны ли яркость с насыщенностью.</p>
-       </div>
+    <header class="cl cl-hero cl-hero-compact" id="top">
+      <nav class="cl-nav">
+        <div class="cl-logo"><img src="data:image/svg+xml;base64,{wing}" alt=""><img src="data:image/svg+xml;base64,{wing}" alt=""></div>
+        <div class="cl-navlinks"><a href="#photo-lab">Фотографии</a><a href="#sample-lab">Выборки</a><a href="#experiment-relation">Зависимость</a><a href="#generator">Генератор</a></div>
+        <a class="gh" href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">Исследование ↗</a>
+      </nav>
+      <p class="cl-eyebrow">COLOR LAB / ИНТЕРАКТИВНАЯ ЛАБОРАТОРНАЯ</p>
+      <h1>Яркость и насыщенность<br>цифровых изображений</h1>
+      <div class="cl-intro-split">
+        <div class="cl-intro-art"><img class="texture" src="data:image/jpeg;base64,{texture}" alt="Декоративная текстура"><img class="leftwing" src="data:image/svg+xml;base64,{wing}" alt=""><img class="rightwing" src="data:image/svg+xml;base64,{wing}" alt=""></div>
+        <div class="cl-intro-text">
+          <span class="cl-ribbon">10 000 фотографий CIFAR-10</span>
+          <p>Как меняется изображение, если увеличить яркость или насыщенность? И как это влияет на статистику?</p>
+          <a class="cl-launch" href="#photo-lab">Начать эксперимент <span aria-hidden="true">↗</span></a>
+          <p class="cl-intro-hint">Настрой фотографию, изучи выборки, исследуй зависимость и попробуй генератор случайных величин.</p>
+        </div>
       </div>
-      <div class="cl-divider"></div>
-      <div class="cl-statement">У каждого изображения есть три цветовых канала RGB. Для анализа я преобразовала их в HSV, чтобы отдельно рассматривать цветовой тон, насыщенность и яркость.
-        <img class="flower" src="data:image/svg+xml;base64,{flower}" alt=""></div>
     </header>
     """)
     return
 
-
 @app.cell
 def _(mo):
     mo.Html("""
-    <section class="cl cl-section cl-contents" id="contents">
-      <div class="cl-head"><h2>Навигация по исследованию</h2></div>
-      <p class="cl-sub">В отчёте сначала показано, что и почему мы рассчитываем, затем — результаты. Python-код и подробные выводы раскрываются по нажатию.</p>
-      <div class="cl-toc">
-       <a href="#data"><span>01</span> Данные и случайные величины</a>
-       <a href="#results"><span>02</span> Описательная статистика</a>
-       <a href="#eda"><span>03</span> Гистограммы и EDA</a>
-       <a href="#distributions"><span>04</span> Математические распределения</a>
-       <a href="#dependence"><span>05</span> Зависимость и гипотеза</a>
-       <a href="#standardization"><span>06</span> Z-стандартизация</a>
-       <a href="#consistency"><span>07</span> Выборки и состоятельность</a>
-       <a href="#methods"><span>08</span> Методика и раскрывающийся код</a>
-       <a href="#interactive"><span>09</span> Эксперименты с фото</a>
-       <a href="#experiment-relation"><span>10</span> Диаграмма зависимости</a>
-       <a href="#generator"><span>11</span> Генератор случайных величин</a>
-       <a href="#conclusion"><span>12</span> Итог исследования</a>
-      </div>
+    <section class="cl cl-section cl-section-start" id="photo-lab">
+       <div class="cl-head"><h2>01. Эксперимент с фотографией</h2></div>
+       <p class="cl-sub">Выбери изображение и измени яркость или насыщенность. Сравни оригинал и результат, затем посмотри, как меняются показатели выборки.</p>
     </section>""")
     return
-
-
-@app.cell
-def _(mo):
-    mo.Html("""
-    <section class="cl cl-section" id="data">
-      <div class="cl-head"><h2>Что исследуется</h2></div>
-      <div class="cl-grid3">
-        <div class="cl-box"><div class="cl-infokey">▱</div><span class="cl-tag">Датасет</span>
-          <p>10 000 тестовых изображений CIFAR-10, размером 32 × 32 пикселя.</p></div>
-        <div class="cl-box"><div class="cl-infokey">☷</div><span class="cl-tag">Переменные</span>
-          <p>Средняя яркость HSV V и средняя насыщенность HSV S. Каждая, в диапазоне 0–1.</p></div>
-        <div class="cl-box"><div class="cl-infokey">◎</div><span class="cl-tag">Цель</span>
-          <p>Изучить распределения, зависимость и точность оценок по выборкам.</p></div>
-      </div>
-      <p class="cl-grid-note">Если случайно выбрать фотографию, заранее неизвестно, какой у неё будет средняя яркость или насыщенность. Обе величины берутся из одних и тех же пикселей, поэтому я отдельно проверяю, есть ли между ними связь.</p>
-      <div class="cl-formula-grid">
-        <div class="cl-formula-card"><span>Средняя яркость X</span><div class="cl-formula">X = (V₁ + V₂ + … + V₁₀₂₄) / 1024</div><small>Среднее значение HSV V по 1024 пикселям</small></div>
-        <div class="cl-formula-card"><span>Средняя насыщенность Y</span><div class="cl-formula">Y = (S₁ + S₂ + … + S₁₀₂₄) / 1024</div><small>Среднее значение HSV S по 1024 пикселям</small></div>
-      </div>
-    </section>""")
-    return
-
-
-@app.cell
-def _(mo, table, num):
-    _mean_b = float(table.brightness.mean())
-    _mean_s = float(table.saturation.mean())
-    _pearson = float(table.brightness.corr(table.saturation))
-    _spearman = float(table.brightness.corr(table.saturation, method="spearman"))
-    _zero = int((table.saturation == 0).sum())
-    _metric_list = [
-        ("Средняя<br>яркость", num(_mean_b)),
-        ("Средняя<br>насыщенность", num(_mean_s)),
-        ("Корреляция<br>Пирсона", num(_pearson)),
-        ("Корреляция<br>Спирмена", num(_spearman)),
-        ("p-value<br>перестановочного теста", "0,0005"),
-        ("Нулевых значений<br>насыщенности", f"{_zero} (1,06%)"),
-    ]
-    _cards = "".join(f'<div class="cl-metric"><div class="cl-metric-label">{_label}</div><span class="cl-metric-value">{_value}</span></div>' for _label, _value in _metric_list)
-    mo.Html(f"""
-    <section class="cl cl-section" id="results">
-       <div class="cl-head"><h2>Основные результаты</h2></div>
-       <div class="cl-metrics">{_cards}</div>
-       <p class="cl-grid-note">Медиана яркости, 0,5370, стандартное отклонение, 0,1279; медиана насыщенности, 0,2539, стандартное отклонение, 0,1403.</p>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Описательная статистика</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Я рассчитала основные статистические характеристики для 10 000 изображений CIFAR-10.</p>\n<ol>\n<li><p>Средняя яркость составила <mark class="cl-key cl-key-yellow">0,5427</mark>, а средняя насыщенность <mark class="cl-key cl-key-green">0,2725</mark>. Получается, что изображения в среднем имеют умеренную яркость, но насыщенность цветов заметно ниже.</p>\n</li>\n<li><p>Стандартное отклонение насыщенности 0,1403 немного больше, чем у яркости 0,1279. Это говорит о том, что насыщенность сильнее изменяется относительно своего среднего значения в абсолютных единицах шкалы HSV.</p>\n</li>\n<li><p>Также я заметила, что у обеих величин среднее немного больше медианы. Особенно это заметно у насыщенности, поэтому можно предположить, что её распределение имеет правостороннюю асимметрию но еще не факт, поэтому следующим шагом построю гистограммы распределений.</p>\n</li>\n</ol>\n</div></details></section>')
-    return
-
-
-@app.cell
-def _(mo, code_panel):
-    mo.Html("""
-    <section class="cl cl-section" id="methods">
-      <div class="cl-head"><h2>Методика, формулы и код</h2></div>
-      <p class="cl-source-note">Полные вычисления, таблицы и расчётные ячейки — <a href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">в исходном Colab ↗</a>. Ниже показаны ключевые фрагменты кода; они скрыты по умолчанию.</p>
-      <p class="cl-sub">Как устроено исследование: сначала определяем случайные величины, затем проверяем статистические свойства и сопоставляем модели с данными. Код можно раскрыть отдельно, он не заслоняет результаты. В основе разделов — вычисления из актуального Google Colab.</p>
-      <div class="cl-grid2">
-        <div class="cl-box"><span class="cl-tag">01 / Случайные величины</span><p>Для каждой фотографии вычисляю среднее значение компонент V и S по 1024 пикселям в цветовом пространстве HSV. Случайность возникает при выборе фотографии из набора.</p><div class="cl-method-formula">X = (1 / 1024) · Σ Vᵢ<br>Y = (1 / 1024) · Σ Sᵢ</div><p class="cl-fine">Формула детерминированно вычисляет значение для выбранной фотографии. Случайная величина — результат при случайном выборе фотографии.</p></div>
-        <div class="cl-box"><span class="cl-tag">02 / Статистики</span><p>Среднее, дисперсия, медиана и квартили характеризуют положение и разброс наблюдений. Для выборочной дисперсии используется деление на n − 1.</p><div class="cl-method-formula">x̄ = Σxᵢ / n<br>s² = Σ(xᵢ − x̄)² / (n − 1)</div><p class="cl-fine">Отдельно рассчитываю парную корреляцию Пирсона и Спирмена.</p></div>
-        <div class="cl-box"><span class="cl-tag">03 / Проверка гипотезы</span><p>H₀: яркость и насыщенность независимы. Для проверки 2000 раз переставляю значения насыщенности и пересчитываю корреляцию. Сравниваю наблюдаемый модуль r с перестановочными.</p><div class="cl-method-formula">p = (k + 1) / (B + 1), B = 2000</div><p class="cl-fine">k — число перестановок, где |r*| ≥ |r наблюд.|. Малое p даёт основания отвергнуть H₀, но само по себе не описывает силу связи.</p></div>
-        <div class="cl-box"><span class="cl-tag">04 / Модели и оценки</span><p>Яркость приближаю нормальным законом; положительную насыщенность — бета-распределением с отдельной вероятностью нуля. Точность оценок проверяю на повторных выборках.</p><div class="cl-method-formula">RMSE = √(Σ(θ̂ⱼ − θ)² / R)</div><p class="cl-fine">В эксперименте R = 300 повторений для каждого объёма и способа отбора.</p></div>
-      </div>
-    </section>""")
-    return
-
-@app.cell
-def _(mo, code_panel):
-    mo.Html('<section class="cl cl-section cl-code-list"><div class="cl-code-list-title">Открыть вычисления из исходного Colab</div>'
-        + code_panel('описательная статистика', 'import pandas as pd\n\ndf = pd.DataFrame({\n    "Яркость": brightness,\n    "Насыщенность": saturation\n})\n\nstatistics = df.describe().T\n\nstatistics["Дисперсия"] = df.var()\n\nprint(statistics.round(4).to_string())', 'На исходном наборе яркостей и насыщенностей рассчитываются выборочные характеристики.')
-        + code_panel('перестановочный тест', 'rng = np.random.default_rng(42)\n\nn_permutations = 2000\nobserved_r = np.corrcoef(brightness, saturation)[0, 1]\n\npermuted_r = np.empty(n_permutations)\n\nfor i in range(n_permutations):\n    shuffled = rng.permutation(saturation)\n    permuted_r[i] = np.corrcoef(brightness, shuffled)[0, 1]\n\np_value = (np.sum(np.abs(permuted_r) >= abs(observed_r)) + 1) / (n_permutations + 1)\n\nprint(f"Наблюдаемая корреляция: {observed_r:.4f}")\nprint(f"Количество перестановок: {n_permutations}")\nprint(f"p-value: {p_value:.6f}")\n\nif p_value < 0.05:\n    print("Нулевая гипотеза отвергается.")\nelse:\n    print("Недостаточно оснований отвергнуть нулевую гипотезу.")', 'Использован фактический код теста из исследовательского ноутбука: 2000 перестановок и двусторонняя статистика.')
-        + code_panel('стандартизация', 'brightness_z = (brightness - brightness.mean()) / brightness.std(ddof=1)\nsaturation_z = (saturation - saturation.mean()) / saturation.std(ddof=1)\n\ncomparison = pd.DataFrame({\n    "Показатель": ["Яркость", "Насыщенность"],\n    "Среднее до": [brightness.mean(), saturation.mean()],\n    "Среднее после": [brightness_z.mean(), saturation_z.mean()],\n    "Ст. откл. до": [brightness.std(ddof=1), saturation.std(ddof=1)],\n    "Ст. откл. после": [brightness_z.std(ddof=1), saturation_z.std(ddof=1)]\n})\n\nprint(comparison.round(4).to_string(index=False))', 'Z-преобразование меняет масштаб, но не превращает данные в нормальное распределение.')
-        + code_panel('состоятельность: повторные выборки', 'rng = np.random.default_rng(42)\n\nsizes = [50, 100, 250, 500, 1000, 2000, 5000]\nrepeats = 300\nresults = []\n\nfor size in sizes:\n    for replace, method in [(True, "С возвращением"), (False, "Без возвращения")]:\n        mean_estimates = []\n        var_estimates = []\n\n        for _ in range(repeats):\n            indices = rng.choice(len(population), size=size, replace=replace)\n            sample = population[indices]\n\n            mean_estimates.append(sample.mean(axis=0))\n            var_estimates.append(sample.var(axis=0, ddof=1))\n\n        mean_estimates = np.array(mean_estimates)\n        var_estimates = np.array(var_estimates)\n\n        mean_rmse = np.sqrt(np.mean((mean_estimates - population_mean) ** 2, axis=0))\n        var_rmse = np.sqrt(np.mean((var_estimates - population_var) ** 2, axis=0))\n\n        results.append([\n            size, method,\n            mean_rmse[0], mean_rmse[1],\n            var_rmse[0], var_rmse[1]\n        ])\n\nrmse_table = pd.DataFrame(\n    results,\n    columns=[\n        "Размер", "Способ",\n        "RMSE среднего яркости",\n        "RMSE среднего насыщенности",\n        "RMSE дисперсии яркости",\n        "RMSE дисперсии насыщенности"\n    ]\n)\n\nprint(rmse_table.round(5).to_string(index=False))', 'Это часть цикла из исходного ноутбука, где сравниваются оценки по выборкам с возвращением и без него.')
-        + code_panel('парный эмпирический генератор', 'rng = np.random.default_rng(42)\nindices = rng.integers(0, len(table), size=n)\ngenerated_pairs = table.loc[indices, ["brightness", "saturation"]].to_numpy()\n# Выбираем реальные пары (яркость, насыщенность) вместе,\n# чтобы сохранить наблюдаемую зависимость.', 'Упрощённая иллюстрация логики генератора; рабочая реализация на сайте допускает выбор базового датчика.')
-        + '</section>')
-    return
-
-@app.cell
-def _(np, plt, table, plot_png, mo, num):
-    _bright = table.brightness.to_numpy()
-    _saturated = table.saturation.to_numpy()
-    _fig, _axs = plt.subplots(1, 2, figsize=(10.5, 3.0), facecolor="white")
-    for _ax, _values, _color, _name in zip(
-        _axs, (_bright, _saturated), ("#d4b441", "#6ca478"), ("Яркость", "Насыщенность")
-    ):
-        _ax.boxplot(_values, vert=False, patch_artist=True, widths=.38,
-                    boxprops=dict(facecolor=_color, edgecolor="#376c56", alpha=.65),
-                    medianprops=dict(color="#244a3d",linewidth=2),
-                    flierprops=dict(marker=".",markersize=3,alpha=.18,
-                                    markerfacecolor="#376c56",markeredgecolor="#376c56"))
-        _ax.set(xlim=(0,1), xlabel="Значение от 0 до 1", title=_name)
-        _ax.set_yticks([])
-        _ax.spines[["top", "right", "left"]].set_visible(False)
-        _ax.grid(axis="x",alpha=.12)
-    _fig.tight_layout()
-    _plot = plot_png(_fig)
-    _bq = np.quantile(_bright,[.25,.75])
-    _sq = np.quantile(_saturated,[.25,.75])
-    mo.Html(f"""
-    <section class="cl cl-section" id="eda">
-       <div class="cl-head"><h2>Разброс и выбросы</h2></div>
-       <div class="cl-box"><img class="cl-chart" src="data:image/png;base64,{_plot}" alt="Диаграммы размаха яркости и насыщенности"></div>
-       <p class="cl-grid-note">Квартильные интервалы по данным: яркость, {num(_bq[0],3)}–{num(_bq[1],3)}, насыщенность, {num(_sq[0],3)}–{num(_sq[1],3)}.</p>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Диаграммы размаха</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Яркость (розовый): основная половина значений находится примерно между 0,46 и 0,62. Медиана составляет 0,537. Есть потенциальные выбросы как среди очень тёмных, так и среди очень светлых изображений.</p>\n<p>Насыщенность (голубой): основная половина значений находится между 0,17 и 0,36. Медиана равна 0,254. Особенно хорошо заметны потенциальные выбросы с высокой насыщенностью. При этом среднее расположено выше медианы, что согласуется с предположением о правосторонней асимметрии.</p>\n</div></details></section>')
-    return
-
-@app.cell
-def _(np, plt, stats, table, plot_png, mo, num):
-    _brightness = table.brightness.to_numpy()
-    _positive = table.loc[table.saturation > 0, "saturation"].to_numpy()
-    _mu, _sigma = stats.norm.fit(_brightness)
-    _alpha, _beta, _, _ = stats.beta.fit(_positive, floc=0, fscale=1)
-    _xs = np.linspace(0.001, .999, 320)
-    _model_cards = []
-    for _values, _color, _label, _density, _note in [
-        (_brightness, "#D4B441", "Яркость, нормальная модель",
-         stats.norm.pdf(_xs, _mu, _sigma), "Форма близка к симметричной. KS = 0,02295; AIC = −12 747,89."),
-        (_positive, "#6CA478", "Насыщенность, бета-модель",
-         stats.beta.pdf(_xs, _alpha, _beta), "Для 9894 положительных значений: a = 2,6313; b = 6,8900. KS = 0,01953; AIC = −12 116,20.")
-    ]:
-        _fig, _ax = plt.subplots(figsize=(6.8,3.1), facecolor="white")
-        _ax.set_facecolor("white")
-        _ax.hist(_values, bins=35, density=True, color=_color, alpha=.55, edgecolor="white", linewidth=.35)
-        _ax.plot(_xs, _density, color="#356d54", linewidth=2.2)
-        _ax.set(xlim=(0,1), xlabel="Значение от 0 до 1", ylabel="Плотность")
-        _ax.spines[["top","right"]].set_visible(False)
-        _ax.grid(alpha=.1)
-        _fig.tight_layout()
-        _img = plot_png(_fig)
-        _model_cards.append(f'<div class="cl-box"><div class="cl-photo-title">{_label}</div><img class="cl-chart" src="data:image/png;base64,{_img}" alt="{_label}"><p class="cl-result-note">{_note}</p></div>')
-    mo.Html(f"""
-    <section class="cl cl-section" id="distributions">
-      <div class="cl-head"><h2>Распределения</h2></div>
-      <div class="cl-grid2">{''.join(_model_cards)}</div>
-      <div class="cl-math-legend"><strong>Как читать параметры бета-модели</strong>
-        <div><span class="cl-math-badge"><i>a</i> = 2,6313</span><span class="cl-math-badge"><i>b</i> = 6,8900</span></div>
-        <p>Числа <i>a</i> и <i>b</i> задают форму кривой бета-распределения. Это параметры модели, подобранные по 9894 изображениям с положительной насыщенностью, а не значения конкретной фотографии.</p>
-      </div>
-      <p class="cl-grid-note">Сравнение AIC выполнено отдельно для яркости на 10 000 значениях и для положительной насыщенности на 9894 значениях; 106 нулей учитываются отдельно.</p>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Предварительное сравнение моделей</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Для яркости нормальное распределение визуально подходит достаточно хорошо, поскольку гистограмма имеет почти симметричную колоколообразную форму. Бета-распределение также близко к данным.</p>\n<p>Для насыщенности ситуация другая. Гистограмма имеет заметную правостороннюю асимметрию, поэтому нормальное распределение описывает её хуже. Бета-распределение лучше учитывает форму распределения, хотя тоже не полностью совпадает с гистограммой.</p>\n<p>Равномерное распределение не подходит ни для одной из величин, поскольку значения распределены по диапазону неравномерно.</p>\n<p>Пока это только визуальное сравнение. Чтобы выбрать более подходящую модель, необходимо дополнительно сравнить численные показатели и проверить качество соответствия распределений данным, что я и сделаю далее.</p>\n</div></details><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Сравнение моделей по AIC</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Я сравнила нормальное, бета- и равномерное распределения с помощью критерия AIC. Чем меньше значение AIC, тем предпочтительнее модель среди рассмотренных вариантов при сравнении на одинаковых данных.</p>\n<p>Для яркости наименьшее значение AIC получилось у нормального распределения −12747,89. Поэтому именно его я выбрала для приближённого описания яркости изображений.</p>\n<p>Для положительной насыщенности наименьшее значение AIC получилось у бета-распределения −12116,20. Оно оказалось предпочтительнее нормального и равномерного распределений.</p>\n<p>При этом среди 10 000 изображений нашлось 106 с нулевой насыщенностью. Поэтому для полного описания насыщенности я использовала смешанную модель, то есть вероятность нулевого значения составляет <mark class="cl-key cl-key-green">1,06%</mark>, а остальные значения описываются <mark class="cl-key cl-key-green">бета-распределением</mark>.</p>\n<p>Полученные модели не являются точным описанием данных, но позволяют достаточно хорошо приблизить их распределения. Дополнительно я проверила их с помощью Q–Q графиков и статистики Колмогорова и Смирнова.</p>\n</div></details><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Бета-модель насыщенности</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Для <mark class="cl-key cl-key-green">9 894 изображений</mark> с положительной насыщенностью я подобрала бета-распределение.</p>\n<p>В результате я получила следующие параметры бета-распределения:</p>\n<ul>\n<li>Параметр <span class="cl-math-inline"><i>a</i> = 2,6313</span></li>\n<li>Параметр <span class="cl-math-inline"><i>b</i> = 6,8900</span></li>\n</ul>\n<p>По графику видно, что полученная кривая достаточно близко повторяет форму гистограммы. Максимум находится примерно в области 0,2–0,3, после чего плотность постепенно уменьшается. При этом кривая не полностью совпадает с данными, особенно в области самых распространённых значений. Поэтому я рассматриваю бета-распределение как приближённую модель, а не как точное описание. Для всех 10 000 изображений отдельно учитывается вероятность нулевой насыщенности, <mark class="cl-key cl-key-green">1,06%</mark>. Это позволяет сохранить реальные значения данных и описать распределение намного корректнее.</p>\n</div></details></section>')
-    return
-
-@app.cell
-def _(np, plt, stats, table, plot_png, mo):
-    _x = table.brightness.to_numpy()
-    _y = table.saturation.to_numpy()
-    _positive = _y[_y > 0]
-    _mu, _sd = stats.norm.fit(_x)
-    _a, _b, _, _ = stats.beta.fit(_positive, floc=0, fscale=1)
-    _fig, _ax = plt.subplots(figsize=(6.4,3.4), facecolor="white")
-    _ax.set_facecolor("white")
-    _heat = _ax.hexbin(_x,_y,gridsize=38,extent=(0,1,0,1),mincnt=1,cmap="YlGn")
-    _ax.set(xlabel="Яркость",ylabel="Насыщенность",xlim=(0,1),ylim=(0,1))
-    _ax.spines[["top","right"]].set_visible(False)
-    _fig.colorbar(_heat,ax=_ax,label="Число изображений",fraction=.04)
-    _fig.tight_layout()
-    _scatter = plot_png(_fig)
-    _fig2,_axs=plt.subplots(1,2,figsize=(7.1,3.0),facecolor="white")
-    for _vals,_ppf,_axis,_accent in [
-        (_x,stats.norm.ppf,_axs[0],"#d4b441"),
-        (_positive,stats.beta.ppf,_axs[1],"#6ca478")
-    ]:
-        _prob=(np.arange(len(_vals))+.5)/len(_vals)
-        _theory=(_ppf(_prob,_mu,_sd) if _axis==_axs[0] else _ppf(_prob,_a,_b))
-        _axis.scatter(_theory,np.sort(_vals),s=1,alpha=.25,color=_accent)
-        _axis.plot([0,1],[0,1],color="#315d48",lw=1.2,linestyle="--")
-        _axis.set(xlim=(0,1),ylim=(0,1),xlabel="Теоретические",ylabel="Эмпирические")
-        _axis.spines[["top","right"]].set_visible(False)
-    _axs[0].set_title("Яркость",fontsize=12)
-    _axs[1].set_title("Насыщенность > 0",fontsize=12)
-    _fig2.tight_layout()
-    _qq=plot_png(_fig2)
-    mo.Html(f"""
-    <section class="cl cl-section" id="dependence">
-       <div class="cl-head"><h2>Проверка моделей и зависимости</h2></div>
-       <div class="cl-grid2">
-         <div class="cl-box"><div class="cl-photo-title">Связь двух характеристик</div>
-           <img class="cl-chart" src="data:image/png;base64,{_scatter}" alt="Диаграмма плотности корреляции">
-           <p class="cl-result-note">Коэффициент Пирсона: −0,1889; Спирмена: −0,1904.</p></div>
-         <div class="cl-box"><div class="cl-photo-title">Q–Q графики моделей</div>
-           <img class="cl-chart" src="data:image/png;base64,{_qq}" alt="Q-Q сравнение с теоретическими моделями">
-           <p class="cl-result-note">KS яркости: 0,02295; KS положительной насыщенности: 0,01953.</p></div>
-       </div>
-
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Проверка гипотезы</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Как я и говорила ранее, для проверки независимости яркости и насыщенности я провела перестановочный тест на основе коэффициента корреляции Пирсона.</p>\n<p>Наблюдаемая корреляция составила <mark class="cl-key cl-key-green">−0,1889</mark>. После 2000 случайных перестановок получилось p-value ≈ <mark class="cl-key cl-key-green">0,0005</mark>.</p>\n<p>Поскольку полученное значение меньше выбранного уровня значимости 0,05, <mark class="cl-key cl-key-green">нулевая гипотеза о независимости отвергается</mark>.</p>\n<p>Таким образом, в исследуемом наборе изображений обнаружена <mark class="cl-key cl-key-green">статистически значимая отрицательная корреляция</mark> между яркостью и насыщенностью. При этом сама связь слабая, так как коэффициент корреляции близок к нулю. Это означает, что по одной только яркости нельзя достаточно точно определить насыщенность фотографии. Я также учитываю, что перестановочный тест с коэффициентом Пирсона в первую очередь чувствителен к линейной связи, поэтому его результат не описывает все возможные формы зависимости.</p>\n</div></details><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Проверка распределений (Q–Q и KS)</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Для яркости статистика KS составила 0,02295. На графике большая часть точек находится близко к диагонали, но на краях есть небольшие отклонения. Поэтому нормальное распределение можно использовать как приближённую модель яркости.</p>\n<p>Для положительной насыщенности статистика KS составила 0,01953. Бета-распределение тоже достаточно близко описывает данные, но в области высоких значений насыщенности заметны расхождения с теоретической кривой. При этом для насыщенности я отдельно учитываю 106 нулевых значений, которые не входят в стандартную бета-модель.</p>\n<p>Таким образом, обе модели подходят для приближённого описания формы данных, но не полностью совпадают с реальными распределениями. По этим результатам нельзя утверждать, что данные точно следуют выбранным теоретическим законам.</p>\n</div></details></section>')
-    return
-
-@app.cell
-def _(mo):
-    mo.Html("""
-    <section class="cl cl-section" id="interactive">
-       <div class="cl-head"><h2>Интерактив</h2></div>
-       <p class="cl-sub">Выбери фотографию, попробуй сделать её светлее или насыщеннее. Посмотри на значения до и после, а затем на статистику выборки. Здесь меняются сами пиксели изображения.</p>
-    </section>""")
-    return
-
 
 @app.cell
 def _(mo, ids, table):
@@ -432,7 +183,6 @@ def _(mo, ids, table):
                     "color":"#244a49", "border-radius":"18px", "padding":"26px", "width":"100%"})
     return photo_select, brightness_ui, saturation_ui, size_ui, sampling_ui, chart_ui, sample_refresh
 
-
 @app.cell
 def _(np, Image, io, zipfile, photos_path, photo_select, brightness_ui, saturation_ui,
           rgb_to_hsv, hsv_to_rgb, image_png):
@@ -454,7 +204,6 @@ def _(np, Image, io, zipfile, photos_path, photo_select, brightness_ui, saturati
     altered_b64 = image_png(altered)
     return chosen_photo_id, b0, s0, b1, s1, original_b64, altered_b64
 
-
 @app.cell
 def _(mo, num, original_b64, altered_b64, chosen_photo_id, b0, s0, b1, s1):
     mo.Html(f"""
@@ -472,7 +221,6 @@ def _(mo, num, original_b64, altered_b64, chosen_photo_id, b0, s0, b1, s1):
     </section>""")
     return
 
-
 @app.cell
 def _(np, table, size_ui, sampling_ui, sample_refresh, chosen_photo_id, b1, s1):
     n = int(size_ui.value)
@@ -486,6 +234,14 @@ def _(np, table, size_ui, sampling_ui, sample_refresh, chosen_photo_id, b1, s1):
     subset_after.loc[0,"saturation"] = s1
     return n, subset_before, subset_after
 
+@app.cell
+def _(mo):
+    mo.Html("""
+    <section class="cl cl-section cl-lab-divider" id="sample-lab">
+      <div class="cl-head"><h2>02. Статистика выборки</h2></div>
+      <p class="cl-sub">Выше можно изменить размер выборки, способ отбора и вид графика. Показатели ниже пересчитываются для выбранной фотографии.</p>
+    </section>""")
+    return
 
 @app.cell
 def _(mo, np, num, plt, plot_png, subset_before, subset_after, n, chart_ui):
@@ -523,108 +279,14 @@ def _(mo, np, num, plt, plot_png, subset_before, subset_after, n, chart_ui):
     </section>""")
     return
 
-
-@app.cell
-def _(np, table, mo, num):
-    _z = (table[["brightness","saturation"]] - table[["brightness","saturation"]].mean()) / table[["brightness","saturation"]].std(ddof=0)
-    _m_b = float(_z.brightness.mean())
-    _m_s = float(_z.saturation.mean())
-    _std_b = float(_z.brightness.std(ddof=0))
-    _std_s = float(_z.saturation.std(ddof=0))
-    mo.Html(f"""
-    <section class="cl cl-section" id="standardization">
-      <div class="cl-head"><h2>Стандартизация</h2></div>
-      <div class="cl-grid2">
-        <div class="cl-box"><span class="cl-tag">Метод</span>
-           <div class="cl-formula" style="font-size:27px">Z = (x − μ) / σ</div><p>Здесь x это значение изображения, μ это среднее по всему набору, σ это стандартное отклонение. Формула показывает, насколько значение отклоняется от среднего в единицах стандартного отклонения.</p></div>
-        <div class="cl-box"><span class="cl-tag">Результат</span>
-           <p>Средние Z: {num(_m_b,3)} и {num(_m_s,3)}; стандартные отклонения: {num(_std_b,2)} и {num(_std_s,2)}.</p></div>
-      </div>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Стандартизация</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>До преобразования средняя яркость составляла <mark class="cl-key cl-key-yellow">0,5427</mark>, а средняя насыщенность <mark class="cl-key cl-key-green">0,2725</mark>. После стандартизации <mark class="cl-key cl-key-green">средние значения обеих величин стали практически равны нулю</mark>, а <mark class="cl-key cl-key-green">стандартные отклонения единице</mark>.</p>\n<p>Стандартизация выполнена правильно. Теперь можно сравнивать, насколько отдельные изображения отличаются от среднего значения по каждой характеристике. При этом исходные данные я сохранила, поскольку стандартизация изменяет масштаб значений, но не делает распределение нормальным.</p>\n</div></details></section>')
-    return
-
-@app.cell
-def _(mo):
-    mo.Html("""
-    <section class="cl cl-section" id="sampling">
-       <div class="cl-head"><h2>Выборки и точность</h2></div>
-       <p class="cl-sub">Я сравнила отбор с возвращением и без него. Для каждого размера выборки от 50 до 5000 фотографий повторила эксперимент 300 раз. На графиках ниже показана средняя ошибка оценок (RMSE).</p>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Сравнение выборок</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>В качестве ориентиров взяла характеристики всех 10 000 изображений: среднюю яркость <mark class="cl-key cl-key-yellow">0,5427</mark> и среднюю насыщенность <mark class="cl-key cl-key-green">0,2725</mark>.</p>\n<p>По таблице видно, что полученные выборочные средние в целом близки к характеристикам всей совокупности. Особенно небольшие отклонения получились для выборок по 1000 изображений.</p>\n<p>Однако я заметила, что при увеличении размера выборки результат не всегда становится точнее. Например, средняя яркость для 500 изображений с возвращением оказалась дальше от среднего, чем для 100 изображений.</p>\n<p>Это объясняется случайностью отбора. Поэтому по одному эксперименту нельзя уверенно определить, какой способ лучше и как меняется точность оценок. Чтобы проверить это, дальше я проведу многократный отбор выборок и сравню средние ошибки оценивания.</p>\n</div></details></section>')
-    return
-
-@app.cell
-def _(np, plt, plot_png, table, mo):
-    _population = table[["brightness","saturation"]].to_numpy()
-    _sizes = [50,100,250,500,1000,2000,5000]
-    _truth_mean = _population.mean(axis=0)
-    _truth_var = _population.var(axis=0,ddof=0)
-    _errors = np.zeros((2,2,2,len(_sizes)))
-    _rng = np.random.default_rng(42)
-    for _method, _replace in enumerate((False,True)):
-        for _index,_size in enumerate(_sizes):
-            _sample_means=[]
-            _sample_vars=[]
-            for _iteration in range(300):
-                _chosen = _rng.choice(len(_population),size=_size,replace=_replace)
-                _v = _population[_chosen]
-                _sample_means.append(_v.mean(axis=0))
-                _sample_vars.append(_v.var(axis=0,ddof=1))
-            _errors[0,_method,:,_index] = np.sqrt(np.mean((np.asarray(_sample_means)-_truth_mean)**2,axis=0))
-            _errors[1,_method,:,_index] = np.sqrt(np.mean((np.asarray(_sample_vars)-_truth_var)**2,axis=0))
-    _fig,_axs = plt.subplots(1,2,figsize=(11.5,3.6),facecolor="white")
-    for _metric,_ax in enumerate(_axs):
-        for _feature,_color in ((0,"#d4b441"),(1,"#6ca478")):
-            for _method,_style in ((0,"-"),(1,"--")):
-                _ax.plot(_sizes,_errors[_metric,_method,_feature,:],_style,marker="o",markersize=3,
-                         color=_color,linewidth=1.8,label=("Яркость" if _feature==0 else "Насыщенность")+(", без возвращения" if _method==0 else ", с возвращением"))
-        _ax.set(title="RMSE среднего" if _metric==0 else "RMSE дисперсии",xlabel="Размер выборки",ylabel="Ошибка")
-        _ax.spines[["top","right"]].set_visible(False)
-        _ax.grid(alpha=.13)
-        _ax.legend(fontsize=7,frameon=False)
-    _fig.tight_layout()
-    _plot = plot_png(_fig)
-    mo.Html(f"""
-    <section class="cl cl-section" style="padding-top:4px">
-      <div class="cl-box"><img class="cl-chart" src="data:image/png;base64,{_plot}" alt="RMSE среднего и дисперсии при росте выборок"></div>
-      <p class="cl-grid-note">RMSE рассчитана для выборочных средних и дисперсий: 300 повторений на каждый размер и способ отбора.</p>
-    </section>""")
-    return
-
-
-
-
-@app.cell
-def _(mo):
-    mo.Html('<section class="cl cl-section cl-conclusions-inset"><details class="cl-verbatim"><summary><span>Вывод по исследованию</span><strong>Состоятельность оценок</strong><span class="cl-expand-icon" aria-hidden="true">+</span></summary><div class="cl-verbatim-body"><p>Я провела по 300 случайных экспериментов для каждого размера выборки и сравнила их.</p>\n<p>Первый график-ошибка оценки среднего. При увеличении выборки с 50 до 5000 изображений RMSE уменьшается как для яркости, так и для насыщенности. Значит, при большем количестве наблюдений выборочные средние обычно оказываются ближе к средним всей совокупности.</p>\n<p>Второй график-ошибка оценки дисперсии. Здесь наблюдаем такую же закономерность. Чем больше изображений берём, тем точнее оцениваем разброс яркости и насыщенности.</p>\n<p>Также на больших выборках сплошные линии чаще расположены ниже пунктирных. Это показывает преимущество отбора без возвращения. При небольших выборках разница может быть совсем маленькой.</p>\n<p>Таким образом, эксперимент показывает, что <mark class="cl-key cl-key-green">увеличение размера выборки повышает точность оценок</mark> среднего и дисперсии. Полученные результаты согласуются с теоретическим свойством состоятельности этих оценок.</p>\n</div></details></section>')
-    return
-
-
-
 @app.cell
 def _(mo):
     mo.Html("""
     <section class="cl cl-section" id="experiment-relation">
-      <div class="cl-head"><h2>Попробуй сам: зависимость</h2></div>
+      <div class="cl-head"><h2>03. Исследуй зависимость</h2></div>
       <p class="cl-sub">Каждая точка на графике соответствует одной фотографии CIFAR-10. Наведи на неё курсор, чтобы узнать значения, или увеличь интересующую область.</p>
     </section>""")
     return
-
 
 @app.cell
 def _(mo, table):
@@ -637,7 +299,6 @@ def _(mo, table):
         {"max-width":"1180px", "margin":"0 auto", "background":"transparent",
          "border-radius":"16px","padding":"17px 23px","color":"#244a49"})
     return relation_count, relation_view
-
 
 @app.cell
 def _(mo, np, table, go, relation_count, relation_view, sample_refresh):
@@ -668,12 +329,11 @@ def _(mo, np, table, go, relation_count, relation_view, sample_refresh):
                              "border-radius":"16px","background":"transparent","color":"#244a49"})
     return relation_plot,
 
-
 @app.cell
 def _(mo):
     mo.Html("""
     <section class="cl cl-section" id="generator">
-      <div class="cl-head"><h2>Датчик случайных величин</h2></div>
+      <div class="cl-head"><h2>04. Генератор случайных величин</h2></div>
       <p class="cl-sub">Здесь генерируются пары чисел: яркость и насыщенность. Это не новые фотографии. Можно сравнить два метода и посмотреть, насколько результаты похожи на исходный CIFAR-10.</p>
       <div class="cl-grid2">
         <div class="cl-box"><span class="cl-tag">Парный эмпирический</span>
@@ -683,7 +343,6 @@ def _(mo):
       </div>
     </section>""")
     return
-
 
 @app.cell
 def _(mo):
@@ -703,7 +362,6 @@ def _(mo):
     ], gap=3).style({"max-width":"1180px","margin":"0 auto",
               "background":"transparent","color":"#264a42","border-radius":"18px","padding":"22px"})
     return generator_method, generator_count, generator_rng, generator_refresh
-
 
 @app.cell
 def _(mo, np, plt, stats, table, plot_png, num, generator_method, generator_count, generator_rng, generator_refresh):
@@ -760,7 +418,7 @@ def _(mo, np, plt, stats, table, plot_png, num, generator_method, generator_coun
     <section class="cl cl-section" style="padding-top:10px">
       <div class="cl-box"><img class="cl-chart" src="data:image/png;base64,{_plot}" alt="Гистограммы и диаграмма сгенерированных значений"></div>
       <div class="cl-grid3" style="margin-top:16px">
-         <div class="cl-box"><span class="cl-tag">Корреляция генератора</span><p class="cl-reading-number">{num(_corr)}</p><p>В оригинале: −0,1889</p></div>
+         <div class="cl-box"><span class="cl-tag">Корреляция генератора</span><p class="cl-reading-number">{num(_corr)}</p><p>В исходных данных: −0,1889</p></div>
          <div class="cl-box"><span class="cl-tag">Расстояние KS яркости</span><p class="cl-reading-number">{num(_ks_b)}</p><p>Между сгенерированными и исходными данными</p></div>
          <div class="cl-box"><span class="cl-tag">Расстояние KS насыщенности</span><p class="cl-reading-number">{num(_ks_s)}</p><p>Чем ближе к нулю, тем ближе эмпирические функции распределения</p></div>
       </div>
@@ -768,35 +426,16 @@ def _(mo, np, plt, stats, table, plot_png, num, generator_method, generator_coun
     </section>""")
     return
 
-
 @app.cell
-def _(mo, flower):
-    mo.Html(f"""
-    <section class="cl cl-section" id="conclusion">
-       <div class="cl-head"><h2>Вывод</h2></div>
-       <div style="display:grid;grid-template-columns:100px 1fr;gap:22px;align-items:start">
-          <img src="data:image/svg+xml;base64,{flower}" alt="" style="width:100px;filter:brightness(0) invert(1);opacity:.7">
-          <div class="cl-full-conclusion">
-<p>В этой работе я исследовала две характеристики цифровых изображений: среднюю яркость и среднюю насыщенность. Для анализа использовала 10 000 изображений из датасета CIFAR-10. Обе величины рассчитывались по цветовой модели HSV.</p>
-<p>Сначала я провела разведочный анализ данных. Средняя яркость изображений составила 0,5427, а средняя насыщенность 0,2725. По гистограммам было видно, что яркость имеет почти симметричное распределение, а насыщенность чаще принимает небольшие значения.</p>
-<p>Затем я проверила, существует ли связь между этими характеристиками. Коэффициент корреляции Пирсона составил −0,1889, а Спирмена −0,1904. Оба значения указывают на слабую отрицательную связь. Перестановочный тест дал p-value около 0,0005, поэтому на уровне значимости 0,05 я опровергла гипотезу о независимости величин. Получается, что в исследуемом наборе более яркие изображения имеют небольшую тенденцию быть менее насыщенными, хотя сама связь выражена слабо.</p>
-<p>Для описания распределений я рассмотрела несколько математических моделей. Яркость удалось достаточно хорошо приблизить нормальным распределением. Для насыщенности я использовала смешанную модель, поскольку у 106 изображений насыщенность оказалась равна нулю. Для остальных 9 894 изображений было подобрано бета-распределение с параметрами <i>a</i> = 2,6313 и <i>b</i> = 6,8900.</p>
-<p>Проверка с помощью Q–Q графиков и статистики Колмогорова и Смирнова показала, что выбранные модели близко описывают наблюдаемые распределения, хотя полностью с ними не совпадают.</p>
-<p>Также я сравнила случайные выборки разного размера. При многократном отборе получилось, что с увеличением количества изображений ошибки оценивания среднего и дисперсии уменьшаются. Это согласуется с теоретическим свойством состоятельности оценок. При больших выборках отбор без возвращения обычно показывал меньшую ошибку.</p>
-<p>С точки зрения дизайна исследование показало, что яркость и насыщенность стоит рассматривать как две разные характеристики изображения. Между ними есть статистическая связь, но она недостаточно сильная, чтобы по одной характеристике точно определять другую.</p>
-<p>При этом результаты относятся к изображениям CIFAR-10, а не ко всем существующим фотографиям. Кроме того, из-за небольшого разрешения изображений исследование не позволяет оценивать качество профессиональной фотографии или её нишевость и эстетику.</p>
-</div>
-       </div>
-
-       <div class="cl-source-block"><span>Методические материалы</span><a href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">Открыть исходный Google Colab ↗</a><a href="../colorlab_report.html" target="_blank" rel="noopener noreferrer">Резервный отчёт без Python ↗</a></div>
-       <div class="cl-footer">
-         <div><strong>COLOR LAB</strong><br>Исследование CIFAR-10, 2026</div>
-         <div class="cl-footer-links"><div>Исходный анализ: <a target="_blank" rel="noopener noreferrer" href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing">Открыть Colab</a></div><div class="cl-note-link"></div></div>
-         <div class="cl-footer-sources"><a href="../colorlab_report.html" target="_blank" rel="noopener noreferrer">Лёгкая версия отчёта (без Python)</a> · Источники: CIFAR-10, В. Е. Гмурман, Leemis и McQueston (2008), SciPy, NumPy, Matplotlib</div>
-       </div>
+def _(mo):
+    mo.Html("""
+    <section class="cl cl-section cl-single-footer" id="more">
+      <div class="cl-head"><h2>Полное исследование</h2></div>
+      <p class="cl-sub">Методика, формулы, графики, проверка гипотез и подробные выводы собраны в Google Colab.</p>
+      <a class="cl-launch" href="https://colab.research.google.com/drive/1TIykhDkBmIEwg3NVIK4BqL7pTjnSKaP7?usp=sharing" target="_blank" rel="noopener noreferrer">Открыть Google Colab ↗</a>
+      <div class="cl-footer"><span>COLOR LAB · CIFAR-10 · 2026</span><a href="#top">Наверх ↑</a></div>
     </section>""")
     return
-
 
 if __name__ == "__main__":
     app.run()
